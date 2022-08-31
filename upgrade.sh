@@ -1,6 +1,10 @@
 #!/bin/bash
 # a script to update and upgrade the system
-# AUR packages are included as well
+# I made this script to speed up the process of updating and upgrading packages,
+# AUR packages that is installed through paru will be updated and upgraded as well.
+# ROOT is needed to run the most parts of this script
+
+# more features and improvements could be implemented in this script
 
 if [ "$EUID" -ne 0 ]; then
 	echo 'root is required'
@@ -34,8 +38,7 @@ if [[ $# -gt 0 ]]; then
 			pacman -Scc -v --noconfirm --overwrite \*
 			sudo -H -u "$NORMUSER" bash -c 'paru -Sccd -v --noconfirm --overwrite \*'
       ;;
-		*)
-			echo "are you sure '$1' is valid?"
+		--help|-h)
       cat <<- 'EOF'
 available commands:
 -confirmall|-ca # skips the interactive mode
@@ -47,6 +50,21 @@ $0 [-confirmall|-ca]
 $0 [-clean|-c] 
 $0 [--overwrite|-ov]
 "
+			;;
+	*)
+    echo "are you sure $1 is valid?"
+	cat <<- 'EOF'
+available commands:
+-confirmall|-ca # skips the interactive mode
+--clean|-c      # cleans the respective package manager's cache.
+--overwrite|-ov # skips the interactive mode and conflict checks
+EOF
+      echo "usage:
+$0 [-confirmall|-ca]
+$0 [-clean|-c] 
+$0 [--overwrite|-ov]
+"
+
 			;;
 	esac
 exit
