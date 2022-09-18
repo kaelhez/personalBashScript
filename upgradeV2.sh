@@ -74,7 +74,9 @@ fi
 
 if [[ "$UPDATEPKGS" ]]; then
   updatepkg "${PARAM[@]}"
-elif [[ "$CLEARPKGS" ]]; then
+fi
+
+if [[ "$CLEARPKGS" ]]; then
   clrpkg "${PARAM[@]}"
 fi
 
