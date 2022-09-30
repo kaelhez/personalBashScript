@@ -2,6 +2,8 @@
 
 help ()
 {
+  local basenm
+  basenm=$(basename "$0")
   cat <<- EOF
 script is best to run with ROOT
 perms,
@@ -11,10 +13,11 @@ available commands:
 
 usage:
 EOF
-echo "  sudo $(basename "$0") -h  # print this out "
-echo "  sudo $(basename "$0") -c  # clear caches "
-echo "  sudo $(basename "$0") -u  # update packages"
-echo "  sudo $(basename "$0") -p  # optional params. eg: --overwrite,etc"
+echo "  sudo $basenm -h # print this out "
+echo "  sudo $basenm -c  # clear caches "
+echo "  sudo $basenm -u  # update packages"
+echo "  sudo $basenm -p  # optional params. eg: --overwrite,etc"
+echo "  sudo $basenm -f  # quiet, no interactive yes/no questions, take caution if this was enabled"
 
 }
 
@@ -22,27 +25,29 @@ echo "  sudo $(basename "$0") -p  # optional params. eg: --overwrite,etc"
 set -e
 
 USER=$(who | awk 'NR==1{print $1;exit}')
-# paru
+
+
 updatepkg ()
 {
-  sh -c "pacman -Syu --noconfirm $*"
-  sudo -H -u "$USER" bash -c "paru -Syu --noconfirm"
+  sh -c "pacman -Syu  $*"
+  sudo -H -u "$USER" bash -c "paru -Syu $*"
 }
 
 
 clrpkg ()
 {
-  sh -c "pacman -Sccd -v --noconfirm $*"
-  sudo -H -u "$USER" bash -c "paru -Sccd -v --noconfirm"
+  sh -c "pacman -Sccd -v $*"
+  sudo -H -u "$USER" bash -c "paru -Sccd -v $*"
 }
 
 
 UPDATEPKGS=
 CLEARPKGS=
+FORCE=
 PARAM=()
 
 # parse args
-while getopts ':hucp:' arg; do
+while getopts ':hucfp:' arg; do
   case "$arg" in
     u)
     UPDATEPKGS=1
@@ -51,7 +56,10 @@ while getopts ':hucp:' arg; do
     CLEARPKGS=1
     ;;
     p)
-    PARAM+=("$OPTARG")
+    PARAM+=("$OPTARG") # add optarg each loop in an array
+    ;;
+    f)
+    FORCE=1
     ;;
     h)
     help
@@ -73,11 +81,21 @@ fi
 
 
 if [[ "$UPDATEPKGS" ]]; then
-  updatepkg "${PARAM[@]}"
+  if [[ "$FORCE" ]]; then
+    echo "force mode is enabled for system updating/upgrading"
+    updatepkg "--noconfirm" "${PARAM[@]}"
+  else
+    updatepkg "${PARAM[@]}"
+  fi
 fi
 
 if [[ "$CLEARPKGS" ]]; then
-  clrpkg "${PARAM[@]}"
+  if [[ "$FORCE" ]]; then
+    echo "force mode is enabled for cache clearing"
+    yes | clrpkg "${PARAM[@]}"
+  else
+    clrpkg "${PARAM[@]}"
+  fi
 fi
 
 if [[ -n "${PARAM[*]}" ]]; then
